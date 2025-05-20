@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: sans-serif;
+    background: #f5f7fa;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 10px;
+  }
+  h1 {
+    font-weight: 700;
+    color: #0052cc;
+    margin-bottom: 12px;
+    font-size: 1.8rem;
+    text-align: center;
+  }
+  .container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    padding: 15px 20px;
+    width: 100%;
+    max-width: 380px;
+    max-height: 600px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  label {
+    display: block;
+    margin-top: 12px;
+    margin-bottom: 4px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #0052cc;
+  }
+  select, input[type="text"], button {
+    width: 100%;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease-in-out;
+  }
+  select:focus, input[type="text"]:focus {
+    outline: none;
+    border-color: #0052cc;
+  }
+  button {
+    background-color: #0052cc;
+    color: white;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    user-select: none;
+  }
+  button:disabled {
+    background-color: #a5b8f0;
+    cursor: not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background-color: #0041a8;
+  }
+
+ 
+  .questions-list {
+    margin-top: 15px;
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+  .question-card {
+    border: 1.8px solid #0052cc;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    background-color: #e8f0fe;
+    position: relative;
+  }
+  .question-header {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #003d99;
+    margin-bottom: 6px;
+  }
+  .question-type {
+    font-size: 0.85rem;
+    color: #004a99;
+  }
+  .option-input {
+    display: flex;
+    margin-bottom: 6px;
+  }
+  .option-input input {
+    flex-grow: 1;
+  }
+  .option-input button {
+    width: 30px;
+    margin-left: 6px;
+    background-color: #cc3300;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+  }
+  .option-input button:hover {
+    background-color: #b82e00;
+  }
+  .btn-inline {
+    background-color: transparent;
+    color: #0052cc;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    padding: 4px 8px;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+    margin-right: 10px;
+  }
+  .btn-inline:hover {
+    color: #002d80;
+  }
+  .question-buttons {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+  .drag-handle {
+    cursor: grab;
+    font-size: 1.2rem;
+    color: #003366;
+    user-select: none;
+    margin-right: 8px;
+  }
+  .horizontal-group {
+    display: flex;
+    align-items: center;
+  }
+
+  .preview-modal {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0,0,0,0.45);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  .preview-content {
+    background-color: white;
+    border-radius: 12px;
+    width: 95%;
+    max-width: 380px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px 24px;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+    position: relative;
+  }
+  .preview-content h2 {
+    color: #0052cc;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 700;
+    font-size: 1.3rem;
+    text-align: center;
+  }
+  .preview-close {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    color: #0052cc;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+  }
+  .preview-close:hover {
+    color: #002a70;
+  }
+
+  .preview-question {
+    margin-bottom: 18px;
+  }
+  .preview-question label {
+    font-weight: 700;
+    display: block;
+    margin-bottom: 8px;
+    font-size: 1rem;
+  }
+  .preview-question input[type="text"], .preview-question textarea {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+    transition: border-color 0.2s ease-in-out;
+  }
+  .preview-question input[type="text"]:focus, .preview-question textarea:focus {
+    outline: none;
+    border-color: #0052cc;
+  }
+  .preview-question .options {
+    display: flex;
+    flex-direction: column;
+  }
+  .preview-question .options label {
+    font-weight: 400;
+    margin-bottom: 6px;
+    cursor: pointer;
+  }
+  #exportData {
+    width: 100%;
+    height: 120px;
+    margin-top: 10px;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    border: 2px solid #ddd;
+    resize: vertical;
+  }
+  @media (max-width: 400px) {
+    .container {
+      max-width: 100%;
+    }
+  }
+</style>
+
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Online Survey Builder</title>
+ <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+
+</head>
+<body>
+<h1>Online Survey Builder</h1>
+<div class="container" role="main" aria-label="Survey builder container">
+
+  <label for="newQuestionText">New Question Text</label>
+  <input type="text" id="newQuestionText" placeholder="Enter your question here" aria-describedby="qHelp" />
+
+  <label for="newQuestionType">Question Type</label>
+  <select id="newQuestionType" aria-describedby="qTypeHelp" aria-label="Select question type">
+    <option value="text">Text Input</option>
+    <option value="multiple-choice">Multiple Choice</option>
+  </select>
+
+  <div id="optionsContainer" style="display:none;">
+    <label>Options (for multiple choice)</label>
+    <div id="optionInputs">
+    
+    </div>
+    <button id="addOptionBtn" type="button" aria-label="Add option button">+ Add Option</button>
+  </div>
+
+  <button id="addQuestionBtn" type="button" disabled>Add Question</button>
+
+  <div class="questions-list" id="questionsList" aria-label="List of survey questions" tabindex="0">
+    
+  </div>
+
+  <button id="previewBtn" type="button" disabled>Preview Survey</button>
+  <button id="exportBtn" type="button" disabled>Export Survey JSON</button>
+  <textarea id="exportData" readonly aria-label="Exported survey JSON" placeholder="Exported JSON will appear here"></textarea>
+</div>
+
+
+<div class="preview-modal" id="previewModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+  <div class="preview-content">
+    <button class="preview-close" id="closePreviewBtn" aria-label="Close preview">&times;</button>
+    <h2 id="previewTitle">Survey Preview</h2>
+    <form id="previewForm" onsubmit="return false;">
+     
+    </form>
+  </div>
+</div>
+
+<script>
+  (function(){
+
+    let questions = [];
+
+    const newQuestionText = document.getElementById('newQuestionText');
+    const newQuestionType = document.getElementById('newQuestionType');
+    const optionsContainer = document.getElementById('optionsContainer');
+    const optionInputs = document.getElementById('optionInputs');
+    const addOptionBtn = document.getElementById('addOptionBtn');
+    const addQuestionBtn = document.getElementById('addQuestionBtn');
+    const questionsList = document.getElementById('questionsList');
+    const previewBtn = document.getElementById('previewBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const exportData = document.getElementById('exportData');
+    const previewModal = document.getElementById('previewModal');
+    const closePreviewBtn = document.getElementById('closePreviewBtn');
+    const previewForm = document.getElementById('previewForm');
+
+   
+    function generateId() {
+      return 'q_' + Math.random().toString(36).substr(2, 9);
+    }
+
+  
+    function updateAddQuestionBtn() {
+      const text = newQuestionText.value.trim();
+      const type = newQuestionType.value;
+      if(!text) {
+        addQuestionBtn.disabled = true;
+        return;
+      }
+      if(type === 'multiple-choice') {
+    
+        const opts = Array.from(optionInputs.querySelectorAll('input.option-text'));
+          let validOpts = opts.filter(o => o.value.trim() !== '');
+          addQuestionBtn.disabled = validOpts.length < 2;
+      } else {
+        addQuestionBtn.disabled = false;
+      }
+    }
+  
+    function addOptionField(value = '') {
+      const div = document.createElement('div');
+      div.className = 'option-input';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = 'Option text';
+      input.value = value;
+      input.className = 'option-text';
+      input.setAttribute('aria-label', 'Option text input');
+      input.addEventListener('input', updateAddQuestionBtn);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.textContent = '×';
+      removeBtn.title = 'Remove option';
+      removeBtn.setAttribute('aria-label', 'Remove option button');
+      removeBtn.addEventListener('click', () => {
+        div.remove();
+        updateAddQuestionBtn();
+      });
+
+      div.appendChild(input);
+      div.appendChild(removeBtn);
+      optionInputs.appendChild(div);
+    }
+
+    function clearOptions() {
+      optionInputs.innerHTML = '';
+    }
+
+    function renderQuestions() {
+      questionsList.innerHTML = '';
+      if (questions.length === 0) {
+        questionsList.innerHTML = '<p style="color:#777; text-align:center;">No questions added yet</p>';
+        previewBtn.disabled = true;
+        exportBtn.disabled = true;
+        exportData.value = '';
+        return;
+      }
+      previewBtn.disabled = false;
+      exportBtn.disabled = false;
+      questions.forEach((q, idx) => {
+        const card = document.createElement('div');
+        card.className = 'question-card';
+        card.setAttribute('draggable', 'true');
+        card.setAttribute('role', 'listitem');
+        card.setAttribute('aria-label', `Question ${idx+1}: ${q.text}`);
+
+        const dragHandle = document.createElement('span');
+        dragHandle.className = 'drag-handle';
+        dragHandle.textContent = '☰';
+        dragHandle.setAttribute('aria-hidden', 'true');
+        dragHandle.title = 'Drag to reorder';
+        card.appendChild(dragHandle);
+
+        const header = document.createElement('div');
+        header.className = 'question-header';
+        header.textContent = (idx+1) + '. ' + q.text;
+        card.appendChild(header);
+
+        const typeInfo = document.createElement('div');
+        typeInfo.className = 'question-type';
+        typeInfo.textContent = q.type === 'text' ? 'Text input' : 'Multiple choice';
+        card.appendChild(typeInfo);
+
+        if (q.type === 'multiple-choice') {
+          const optsList = document.createElement('ul');
+          optsList.style.marginTop = '8px';
+          optsList.style.paddingLeft = '18px';
+          optsList.style.color = '#0052cc';
+          q.options.forEach(opt => {
+            const li = document.createElement('li');
+            li.textContent = opt;
+            optsList.appendChild(li);
+          });
+          card.appendChild(optsList);
+        }
+        const btnsDiv = document.createElement('div');
+        btnsDiv.className = 'question-buttons';
+
+    
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn-inline';
+        editBtn.textContent = 'Edit';
+        editBtn.setAttribute('aria-label', `Edit question ${idx+1}`);
+        editBtn.addEventListener('click', () => {
+          openEditQuestionModal(idx);
+        });
+        btnsDiv.appendChild(editBtn);
+
+     
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn-inline';
+        deleteBtn.style.color = '#cc3300';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.setAttribute('aria-label', `Delete question ${idx+1}`);
+        deleteBtn.addEventListener('click', () => {
+          if (confirm('Delete this question?')) {
+            questions.splice(idx,1);
+            renderQuestions();
+          }
+        });
+        btnsDiv.appendChild(deleteBtn);
+
+        card.appendChild(btnsDiv);
+
+     
+        card.addEventListener('dragstart', ev => {
+          ev.dataTransfer.effectAllowed = 'move';
+          ev.dataTransfer.setData('text/plain', idx.toString());
+          ev.target.style.opacity = '0.5';
+        });
+        card.addEventListener('dragend', ev => {
+          ev.target.style.opacity = '';
+        });
+        card.addEventListener('dragover', ev => {
+          ev.preventDefault();
+          ev.dataTransfer.dropEffect = 'move';
+        });
+        card.addEventListener('drop', ev => {
+          ev.preventDefault();
+          const fromIndex = parseInt(ev.dataTransfer.getData('text/plain'));
+          const toIndex = idx;
+          if (fromIndex !== toIndex) {
+            const moved = questions.splice(fromIndex,1)[0];
+            questions.splice(toIndex,0,moved);
+            renderQuestions();
+          }
+        });
+
+        questionsList.appendChild(card);
+      });
+    }
+
+    function addQuestion() {
+      const text = newQuestionText.value.trim();
+      const type = newQuestionType.value;
+      if (!text) return;
+      let options = [];
+      if(type === 'multiple-choice') {
+        options = Array.from(optionInputs.querySelectorAll('input.option-text'))
+          .map(i => i.value.trim())
+          .filter(v => v.length > 0);
+        if(options.length < 2) return;
+      }
+      questions.push({id: generateId(), text, type, options});
+      resetNewQuestionInputs();
+      renderQuestions();
+    }
+
+  
+    function resetNewQuestionInputs() {
+      newQuestionText.value = '';
+      if(newQuestionType.value === 'multiple-choice') {
+        clearOptions();
+        addOptionField();
+        addOptionField();
+      }
+      addQuestionBtn.disabled = true;
+    }
+
+    
+    function handleQuestionTypeChange() {
+      if(newQuestionType.value === 'multiple-choice') {
+        optionsContainer.style.display = 'block';
+        if(optionInputs.children.length === 0) {
+          addOptionField();
+          addOptionField();
+        }
+      } else {
+        optionsContainer.style.display = 'none';
+        clearOptions();
+      }
+      updateAddQuestionBtn();
+    }
+
+
+    function renderPreview() {
+      previewForm.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const qDiv = document.createElement('div');
+        qDiv.className = 'preview-question';
+        const label = document.createElement('label');
+        label.textContent = (idx+1) + '. ' + q.text;
+        label.setAttribute('for', 'preview-q-'+q.id);
+        qDiv.appendChild(label);
+        if(q.type === 'text') {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.id = 'preview-q-'+q.id;
+          input.disabled = true;
+          qDiv.appendChild(input);
+        } else if (q.type === 'multiple-choice') {
+          const optsDiv = document.createElement('div');
+          optsDiv.className = 'options';
+          q.options.forEach((opt, i) => {
+            const optLabel = document.createElement('label');
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = 'preview-q-'+q.id;
+            radio.disabled = true;
+            optLabel.appendChild(radio);
+            optLabel.appendChild(document.createTextNode(' ' + opt));
+            optsDiv.appendChild(optLabel);
+          });
+          qDiv.appendChild(optsDiv);
+        }
+        previewForm.appendChild(qDiv);
+      });
+    }
+
+
+    function openPreview() {
+      renderPreview();
+      previewModal.style.display = 'flex';
+      previewModal.setAttribute('aria-hidden', 'false');
+      closePreviewBtn.focus();
+    }
+
+    
+    function closePreview() {
+      previewModal.style.display = 'none';
+      previewModal.setAttribute('aria-hidden', 'true');
+      previewBtn.focus();
+    }
+
+
+    function exportSurvey() {
+      if(questions.length === 0) {
+        exportData.value = '';
+        return;
+      }
+     
+      const exportObj = questions.map(({id, text, type, options}) => ({
+        id,
+        text,
+        type,
+        options: options || []
+      }));
+      exportData.value = JSON.stringify(exportObj, null, 2);
+      exportData.focus();
+      exportData.select();
+    }
+
+   
+    function openEditQuestionModal(idx) {
+      const q = questions[idx];
+     
+      newQuestionText.value = q.text;
+      newQuestionType.value = q.type;
+      handleQuestionTypeChange();
+      if(q.type === 'multiple-choice') {
+        clearOptions();
+        q.options.forEach(opt => addOptionField(opt));
+      }
+      addQuestionBtn.textContent = 'Save';
+      addQuestionBtn.disabled = false;
+   
+      questionsList.style.pointerEvents = 'none';
+      previewBtn.disabled = true;
+      exportBtn.disabled = true;
+
+      function saveEditHandler() {
+        
+        const textVal = newQuestionText.value.trim();
+        const typeVal = newQuestionType.value;
+        if(!textVal) return;
+        let optsVal = [];
+        if(typeVal === 'multiple-choice') {
+          optsVal = Array.from(optionInputs.querySelectorAll('input.option-text'))
+            .map(i=>i.value.trim())
+            .filter(v=>v.length>0);
+          if(optsVal.length<2) return;
+        }
+       
+        questions[idx] = { ...questions[idx], text: textVal, type: typeVal, options: typeVal==='multiple-choice' ? optsVal : [] };
+        resetNewQuestionInputs();
+        renderQuestions();
+        addQuestionBtn.textContent = 'Add Question';
+        questionsList.style.pointerEvents = '';
+        previewBtn.disabled = questions.length === 0;
+        exportBtn.disabled = questions.length === 0;
+   
+        addQuestionBtn.removeEventListener('click', saveEditHandler);
+        addQuestionBtn.addEventListener('click', addQuestion);
+      }
+     
+      addQuestionBtn.removeEventListener('click', addQuestion);
+      addQuestionBtn.addEventListener('click', saveEditHandler);
+      newQuestionText.focus();
+    }
+
+
+    newQuestionText.addEventListener('input', updateAddQuestionBtn);
+    newQuestionType.addEventListener('change', () => {
+      handleQuestionTypeChange();
+      updateAddQuestionBtn();
+    });
+    addOptionBtn.addEventListener('click', () => {
+      addOptionField();
+      updateAddQuestionBtn();
+    });
+    addQuestionBtn.addEventListener('click', addQuestion);
+    previewBtn.addEventListener('click', openPreview);
+    closePreviewBtn.addEventListener('click', closePreview);
+    exportBtn.addEventListener('click', exportSurvey);
+
+   
+    document.addEventListener('keydown', ev => {
+      if(ev.key === 'Escape' && previewModal.style.display === 'flex') {
+        closePreview();
+      }
+    });
+
+  
+    function init() {
+      handleQuestionTypeChange();
+      renderQuestions();
+    }
+
+    init();
+
+  })();
+</script>
+</body>
+</html>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+  </body>
+</html>
